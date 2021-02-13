@@ -152,13 +152,22 @@
 // AIRLOCKS
 
 /obj/machinery/door/airlock/BorgShiftClick(mob/living/silicon/robot/user)  // Opens and closes doors! Forwards to AI code.
-	AIShiftClick(user)
+	if(!cell || cell.charge <= 0 || lockcharge) // Disable interaction if the Borg is unpowered or locked.
+		to_chat(user, "<span class='notice'>You failed to connect with the device.</span>")
+	else
+		AIShiftClick(user)
 
 /obj/machinery/door/airlock/BorgCtrlClick(mob/living/silicon/robot/user) // Bolts doors. Forwards to AI code.
-	AICtrlClick(user)
+	if(!cell || cell.charge <= 0 || lockcharge) // Disable interaction if the Borg is unpowered or locked.
+		to_chat(user, "<span class='notice'>You failed to connect with the device.</span>")
+	else
+		AICtrlClick(user)
 
 /obj/machinery/door/airlock/BorgAltClick(mob/living/silicon/robot/user) // Eletrifies doors. Forwards to AI code.
-	AIAltClick(user)
+	if(!cell || cell.charge <= 0 || lockcharge) // Disable interaction if the Borg is unpowered or locked.
+		to_chat(user, "<span class='notice'>You failed to connect with the device.</span>")
+	else
+		AIAltClick(user)
 
 /obj/machinery/door/airlock/BorgAltShiftClick(mob/living/silicon/robot/user)  // Enables emergency override on doors! Forwards to AI code.
 	AIAltShiftClick(user)
@@ -167,7 +176,10 @@
 // APC
 
 /obj/machinery/power/apc/BorgCtrlClick(mob/living/silicon/robot/user) // turns off/on APCs. Forwards to AI code.
-	AICtrlClick(user)
+	if(!cell || cell.charge <= 0 || lockcharge) // Disable interaction if the Borg is unpowered or locked.
+		to_chat(user, "<span class='notice'>You failed to connect with the device.</span>")
+	else
+		AICtrlClick(user)
 
 
 // AI SLIPPER
@@ -182,10 +194,16 @@
 // TURRETCONTROL
 
 /obj/machinery/turretid/BorgCtrlClick(mob/living/silicon/robot/user) //turret control on/off. Forwards to AI code.
-	AICtrlClick(user)
+	if(!cell || cell.charge <= 0 || lockcharge) // Disable interaction if the Borg is unpowered or locked.
+		to_chat(user, "<span class='notice'>You failed to connect with the device.</span>")
+	else
+		AICtrlClick(user)
 
 /obj/machinery/turretid/BorgAltClick(mob/living/silicon/robot/user) //turret lethal on/off. Forwards to AI code.
-	AIAltClick(user)
+	if(!cell || cell.charge <= 0 || lockcharge) // Disable interaction if the Borg is unpowered or locked.
+		to_chat(user, "<span class='notice'>You failed to connect with the device.</span>")
+	else
+		AIAltClick(user)
 
 /*
 	As with AI, these are not used in click code,
