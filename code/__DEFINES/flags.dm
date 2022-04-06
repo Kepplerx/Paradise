@@ -24,6 +24,9 @@
 
 #define DROPDEL					16384	// When dropped, it calls qdel on itself
 
+///Whether or not this atom shows screentips when hovered over
+#define NO_SCREENTIPS			32768
+
 
 /* Secondary atom flags, for the flags_2 var, denoted with a _2 */
 
@@ -34,10 +37,6 @@
 #define STATIONLOVING_2			16
 #define INFORM_ADMINS_ON_RELOCATE_2	32
 #define BANG_PROTECT_2			64
-
-// An item worn in the ear slot with HEALS_EARS will heal your ears each
-// Life() tick, even if normally your ears would be too damaged to heal.
-#define HEALS_EARS_2			128
 
 // A mob with OMNITONGUE has no restriction in the ability to speak
 // languages that they know. So even if they wouldn't normally be able to
@@ -81,11 +80,17 @@
 #define HAS_HEAD_MARKINGS	64
 #define HAS_BODY_MARKINGS	128
 #define HAS_TAIL_MARKINGS	256
-#define HAS_MARKINGS		HAS_HEAD_MARKINGS|HAS_BODY_MARKINGS|HAS_TAIL_MARKINGS
 #define TAIL_WAGGING    	512
 #define NO_EYES				1024
 #define HAS_ALT_HEADS		2048
-#define ALL_RPARTS			4096
+#define HAS_WING			4096
+#define HAS_BODYACC_COLOR	8192
+#define BALD				16384
+#define ALL_RPARTS			32768
+
+//Pre-baked combinations of the above body flags
+#define HAS_BODY_ACCESSORY 	HAS_TAIL|HAS_WING
+#define HAS_MARKINGS		HAS_HEAD_MARKINGS|HAS_BODY_MARKINGS|HAS_TAIL_MARKINGS
 
 //Species Diet Flags
 #define DIET_CARN		1
@@ -107,6 +112,7 @@
 #define PASSBLOB		8
 #define PASSMOB			16
 #define LETPASSTHROW	32
+#define PASSFENCE		64
 
 //turf-only flags
 #define NOJAUNT		1
@@ -114,22 +120,21 @@
 #define NO_RUINS 	4
 
 //ITEM INVENTORY SLOT BITMASKS
-#define SLOT_OCLOTHING 1
-#define SLOT_ICLOTHING 2
-#define SLOT_GLOVES 4
-#define SLOT_EYES 8
-#define SLOT_EARS 16
-#define SLOT_MASK 32
-#define SLOT_HEAD 64
-#define SLOT_FEET 128
-#define SLOT_ID 256
-#define SLOT_BELT 512
-#define SLOT_BACK 1024
-#define SLOT_POCKET 2048		//this is to allow items with a w_class of 3 or 4 to fit in pockets.
-#define SLOT_DENYPOCKET 4096	//this is to deny items with a w_class of 2 or 1 to fit in pockets.
-#define SLOT_TWOEARS 8192
-#define SLOT_PDA 16384
-#define SLOT_TIE 32768
+#define SLOT_OCLOTHING	(1<<0)
+#define SLOT_ICLOTHING	(1<<1)
+#define SLOT_GLOVES		(1<<2)
+#define SLOT_EYES		(1<<3)
+#define SLOT_EARS		(1<<4)
+#define SLOT_MASK		(1<<5)
+#define SLOT_HEAD		(1<<6)
+#define SLOT_FEET		(1<<7)
+#define SLOT_ID			(1<<8)
+#define SLOT_BELT		(1<<9)
+#define SLOT_BACK		(1<<10)
+#define SLOT_POCKET 	(1<<11)	//this is to allow items with a w_class of 3 or 4 to fit in pockets.
+#define SLOT_TWOEARS	(1<<12)
+#define SLOT_PDA		(1<<13)
+#define SLOT_TIE		(1<<14)
 
 //ORGAN TYPE FLAGS
 #define AFFECT_ROBOTIC_ORGAN	1

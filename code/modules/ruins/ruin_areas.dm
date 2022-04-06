@@ -7,6 +7,7 @@
 	there_can_be_many = TRUE
 	dynamic_lighting = DYNAMIC_LIGHTING_FORCED
 	ambientsounds = RUINS_SOUNDS
+	sound_environment = SOUND_ENVIRONMENT_STONEROOM
 
 /area/ruin/unpowered
 	always_unpowered = FALSE
@@ -41,8 +42,8 @@
 	name = "Crew Quarters"
 	icon_state = "Sleep"
 
-/area/ruin/onehalf/bridge
-	name = "Bridge"
+/area/ruin/onehalf/abandonedbridge
+	name = "Abandoned Bridge"
 	icon_state = "bridge"
 
 // Old tcommsat

@@ -13,7 +13,7 @@
 	var/list/insultmsg = list("FUCK EVERYONE!", "I'M A TATER!", "ALL SECURITY TO SHOOT ME ON SIGHT!", "I HAVE A BOMB!", "CAPTAIN IS A COMDOM!", "FOR THE SYNDICATE!")
 
 /obj/item/megaphone/attack_self(mob/living/user as mob)
-	if(user.client && (user.client.prefs.muted & MUTE_IC))
+	if(check_mute(user.ckey, MUTE_IC))
 		to_chat(src, "<span class='warning'>You cannot speak in IC (muted).</span>")
 		return
 	if(!ishuman(user))
@@ -32,7 +32,7 @@
 		if(H && H.mind && H.mind.miming)
 			to_chat(user, "<span class='warning'>Your vow of silence prevents you from speaking.</span>")
 			return
-		if((COMIC in H.mutations) || H.get_int_organ(/obj/item/organ/internal/cyberimp/brain/clown_voice))
+		if(HAS_TRAIT(H, TRAIT_COMIC_SANS))
 			span = "sans"
 	if(spamcheck)
 		to_chat(user, "<span class='warning'>\The [src] needs to recharge!</span>")

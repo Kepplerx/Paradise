@@ -1,4 +1,4 @@
-/obj/effect/proc_holder/spell/targeted/touch/banana
+/obj/effect/proc_holder/spell/touch/banana
 	name = "Banana Touch"
 	desc = "A spell popular at wizard birthday parties, this spell will put on a clown costume on the target, \
 		stun them with a loud HONK, and mutate them to make them more entertaining! \
@@ -57,8 +57,8 @@
 		equip_to_slot_if_possible(new /obj/item/clothing/mask/gas/clown_hat/nodrop, slot_wear_mask, TRUE, TRUE)
 	dna.SetSEState(GLOB.clumsyblock, TRUE, TRUE)
 	dna.SetSEState(GLOB.comicblock, TRUE, TRUE)
-	genemutcheck(src, GLOB.clumsyblock, null, MUTCHK_FORCED)
-	genemutcheck(src, GLOB.comicblock, null, MUTCHK_FORCED)
+	singlemutcheck(src, GLOB.clumsyblock, MUTCHK_FORCED)
+	singlemutcheck(src, GLOB.comicblock, MUTCHK_FORCED)
 	if(!(iswizard(src) || (mind && mind.special_role == SPECIAL_ROLE_WIZARD_APPRENTICE))) //Mutations are permanent on non-wizards. Can still be removed by genetics fuckery but not mutadone.
 		dna.default_blocks.Add(GLOB.clumsyblock)
 		dna.default_blocks.Add(GLOB.comicblock)

@@ -25,11 +25,9 @@
 
 /obj/machinery/computer/operating/New()
 	..()
-	for(dir in list(NORTH,EAST,SOUTH,WEST))
-		table = locate(/obj/machinery/optable, get_step(src, dir))
-		if(table)
-			table.computer = src
-			break
+	table = locate(/obj/machinery/optable, orange(1, src))
+	if(table)
+		table.computer = src
 
 /obj/machinery/computer/operating/Destroy()
 	if(table)
@@ -38,6 +36,9 @@
 	if(currentPatient)
 		currentPatient = null
 	return ..()
+
+/obj/machinery/computer/operating/detailed_examine()
+	return "This console gives information on the status of the patient on the adjacent operating table, notably their consciousness."
 
 /obj/machinery/computer/operating/attack_ai(mob/user)
 	add_fingerprint(user)
@@ -185,7 +186,7 @@
 	var/patientStatus // Tell the computer what to say based on the status of the patient on the table.
 	var/isNewPatient = (table.patient != currentPatient) //Is this a new Patient?
 
-	if(table.patient.stat == DEAD || table.patient.status_flags & FAKEDEATH)
+	if(table.patient.stat == DEAD || HAS_TRAIT(table.patient, TRAIT_FAKEDEATH))
 		patientStatus = "Dead"
 	else if(table.patient.stat == CONSCIOUS)
 		patientStatus = "Awake"

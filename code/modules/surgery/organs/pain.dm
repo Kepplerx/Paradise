@@ -34,7 +34,7 @@
 	if(stat >= UNCONSCIOUS)
 		return
 
-	if(NO_PAIN in dna.species.species_traits)
+	if(HAS_TRAIT(src, TRAIT_NOPAIN))
 		return
 	if(reagents.has_reagent("morphine"))
 		return
@@ -54,7 +54,7 @@
 
 	if(stat >= UNCONSCIOUS)
 		return
-	if(NO_PAIN in dna.species.species_traits)
+	if(HAS_TRAIT(src, TRAIT_NOPAIN))
 		return
 	if(reagents.has_reagent("morphine"))
 		return
@@ -79,6 +79,16 @@
 	for(var/obj/item/organ/internal/I in internal_organs)
 		if(I.hidden_pain)
 			continue
-		if(I.damage > 2 && prob(2))
+		if(prob(2) && I.damage > 2)
 			var/obj/item/organ/external/parent = get_organ(I.parent_organ)
-			custom_pain("You feel a sharp pain in your [parent.limb_name]")
+			var/intensity
+			switch(I.damage)
+				if(0 to 10)
+					intensity = "a dull"
+				if(10 to 30)
+					intensity = "a nagging"
+				if(30 to 50)
+					intensity = "a sharp"
+				else
+					intensity = "a stabbing"
+			custom_pain("You feel [intensity] pain in your [parent.limb_name]!")

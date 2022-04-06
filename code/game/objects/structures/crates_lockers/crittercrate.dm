@@ -2,11 +2,16 @@
 	name = "critter crate"
 	desc = "A crate designed for safe transport of animals. Only openable from the the outside."
 	icon_state = "critter"
-	icon_opened = "critteropen"
+	icon_opened = "critter_open"
 	icon_closed = "critter"
+	open_door_sprite = null
 	var/already_opened = 0
 	var/content_mob = null
 	var/amount = 1
+	open_sound = 'sound/machines/wooden_closet_open.ogg'
+	close_sound = 'sound/machines/wooden_closet_close.ogg'
+	open_sound_volume = 25
+	close_sound_volume = 50
 
 /obj/structure/closet/critter/can_open()
 	if(welded)
@@ -85,3 +90,7 @@
 /obj/structure/closet/critter/deer
 	name = "deer crate"
 	content_mob = /mob/living/simple_animal/deer
+
+/obj/structure/closet/critter/bunny
+	name = "bunny crate"
+	content_mob = /mob/living/simple_animal/bunny

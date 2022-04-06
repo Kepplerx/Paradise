@@ -46,7 +46,7 @@
 		emagged = 1
 		req_access = list()
 		req_one_access = list()
-		playsound(loc, "sparks", 100, 1)
+		playsound(src, "sparks", 100, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 
 /obj/machinery/door_control/attack_ghost(mob/user)
 	if(user.can_advanced_admin_interact())
@@ -124,3 +124,11 @@
 		icon_state = "doorctrl-p"
 	else
 		icon_state = "doorctrl0"
+
+/obj/machinery/door_control/no_emag
+	desc = "A remote control-switch for a door. Looks tougher than usual."
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
+
+/obj/machinery/door_control/no_emag/emag_act(user as mob)
+	to_chat(user, "<span class='notice'>The electronic systems in this button are far too advanced for your primitive hacking peripherals.</span>")
+	return

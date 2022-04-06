@@ -12,11 +12,19 @@
 	log_adminsay(msg, src)
 
 	if(check_rights(R_ADMIN,0))
+		// Do this up here before it gets sent to everyone & emoji'd
+		if(SSredis.connected)
+			var/list/data = list()
+			data["author"] = usr.ckey
+			data["source"] = GLOB.configuration.system.instance_id
+			data["message"] = msg
+			SSredis.publish("byond.asay.out", json_encode(data))
+
 		for(var/client/C in GLOB.admins)
 			if(R_ADMIN & C.holder.rights)
 				// Lets see if this admin was pinged in the asay message
 				if(findtext(msg, "@[C.ckey]") || findtext(msg, "@[C.key]")) // Check ckey and key, so you can type @AffectedArc07 or @affectedarc07
-					SEND_SOUND(C, 'sound/misc/ping.ogg')
+					SEND_SOUND(C, sound('sound/misc/ping.ogg'))
 					msg = replacetext(msg, "@[C.ckey]", "<font color='red'>@[C.ckey]</font>")
 					msg = replacetext(msg, "@[C.key]", "<font color='red'>@[C.key]</font>") // Same applies here. key and ckey.
 
@@ -43,9 +51,18 @@
 
 	msg = sanitize(copytext(msg, 1, MAX_MESSAGE_LEN))
 	log_mentorsay(msg, src)
+	mob.create_log(OOC_LOG, "MSAY: [msg]")
 
 	if(!msg)
 		return
+
+	// Do this up here before it gets sent to everyone & emoji'd
+	if(SSredis.connected)
+		var/list/data = list()
+		data["author"] = usr.ckey
+		data["source"] = GLOB.configuration.system.instance_id
+		data["message"] = msg
+		SSredis.publish("byond.msay.out", json_encode(data))
 
 	for(var/client/C in GLOB.admins)
 		if(check_rights(R_ADMIN|R_MOD|R_MENTOR, 0, C.mob))

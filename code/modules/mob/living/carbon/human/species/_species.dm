@@ -2,7 +2,6 @@
 	var/name                     // Species name.
 	var/name_plural 			// Pluralized name (since "[name]s" is not always valid)
 	var/icobase = 'icons/mob/human_races/r_human.dmi'    // Normal icon set.
-	var/deform = 'icons/mob/human_races/r_def_human.dmi' // Mutated icon set.
 
 	// Damage overlay and masks.
 	var/damage_overlays = 'icons/mob/human_races/masks/dam_human.dmi'
@@ -15,10 +14,12 @@
 
 	var/datum/species/primitive_form = null          // Lesser form, if any (ie. monkey for humans)
 	var/datum/species/greater_form = null             // Greater form, if any, ie. human for monkeys.
-	var/tail                     // Name of tail image in species effects icon file.
+	/// Name of tail image in species effects icon file.
+	var/tail
+	/// like tail but wings
+	var/wing
 	var/datum/unarmed_attack/unarmed                  //For empty hand harm-intent attack
 	var/unarmed_type = /datum/unarmed_attack
-	var/silent_steps = 0          // Stops step noises
 
 	var/cold_level_1 = 260  // Cold damage level 1 below this point.
 	var/cold_level_2 = 200  // Cold damage level 2 below this point.
@@ -52,19 +53,25 @@
 	var/stamina_mod = 1
 	var/stun_mod = 1	 // If a species is more/less impacated by stuns/weakens/paralysis
 	var/speed_mod = 0	// this affects the race's speed. positive numbers make it move slower, negative numbers make it move faster
+	///Percentage modifier for overall defense of the race, or less defense, if it's negative.
+	var/armor = 0
 	var/blood_damage_type = OXY //What type of damage does this species take if it's low on blood?
 	var/total_health = 100
 	var/punchdamagelow = 0       //lowest possible punch damage
 	var/punchdamagehigh = 9      //highest possible punch damage
 	var/punchstunthreshold = 9	 //damage at which punches from this race will stun //yes it should be to the attacked race but it's not useful that way even if it's logical
-	var/list/default_genes = list()
 
 	var/ventcrawler = VENTCRAWLER_NONE //Determines if the mob can go through the vents.
 	var/has_fine_manipulation = 1 // Can use small items.
 
+	///Sounds to override barefeet walking
+	var/list/special_step_sounds
+
 	var/list/allowed_consumed_mobs = list() //If a species can consume mobs, put the type of mobs it can consume here.
 
 	var/list/species_traits = list()
+	///Generic traits tied to having the species.
+	var/list/inherent_traits = list()
 
 	var/breathid = "o2"
 
@@ -83,6 +90,8 @@
 	var/single_gib_type = /obj/effect/decal/cleanable/blood/gibs
 	var/remains_type = /obj/effect/decal/remains/human //What sort of remains is left behind when the species dusts
 	var/base_color      //Used when setting species.
+	/// bitfield of biotypes the mob belongs to.
+	var/inherent_biotypes = MOB_ORGANIC | MOB_HUMANOID
 	var/list/inherent_factions
 
 	//Used in icon caching.
@@ -132,6 +141,9 @@
 	var/default_headacc				//Default head accessory style for newly created humans unless otherwise set.
 	var/default_headacc_colour
 
+	/// Name of default body accessory if any.
+	var/default_bodyacc
+
 	//Defining lists of icon skin tones for species that have them.
 	var/list/icon_skin_tones = list()
 
@@ -145,7 +157,7 @@
 		"appendix" = /obj/item/organ/internal/appendix,
 		"eyes" =     /obj/item/organ/internal/eyes
 		)
-	var/vision_organ              // If set, this organ is required for vision. Defaults to "eyes" if the species has them.
+	var/vision_organ = /obj/item/organ/internal/eyes // If set, this organ is required for vision.
 	var/list/has_limbs = list(
 		"chest" =  list("path" = /obj/item/organ/external/chest),
 		"groin" =  list("path" = /obj/item/organ/external/groin),
@@ -165,11 +177,10 @@
 	// Species specific boxes
 	var/speciesbox
 
-/datum/species/New()
-	//If the species has eyes, they are the default vision organ
-	if(!vision_organ && has_organ["eyes"])
-		vision_organ = /obj/item/organ/internal/eyes
+	/// Whether the presence of a body accessory on this species is optional or not.
+	var/optional_body_accessory = TRUE
 
+/datum/species/New()
 	unarmed = new unarmed_type()
 
 /datum/species/proc/get_random_name(gender)
@@ -200,8 +211,9 @@
 	for(var/name in H.bodyparts_by_name)
 		H.bodyparts |= H.bodyparts_by_name[name]
 
-	for(var/obj/item/organ/external/O in H.bodyparts)
-		O.owner = H
+	for(var/obj/item/organ/external/E as anything in H.bodyparts)
+		E.owner = H
+		E.add_limb_flags()
 
 /datum/species/proc/create_mutant_organs(mob/living/carbon/human/H)
 	var/obj/item/organ/internal/ears/ears = H.get_int_organ(/obj/item/organ/internal/ears)
@@ -212,7 +224,7 @@
 		ears = new mutantears(H)
 
 /datum/species/proc/breathe(mob/living/carbon/human/H)
-	if((NO_BREATHE in species_traits) || (BREATHLESS in H.mutations))
+	if(HAS_TRAIT(H, TRAIT_NOBREATH))
 		return TRUE
 
 ////////////////
@@ -222,17 +234,15 @@
 
 /datum/species/proc/movement_delay(mob/living/carbon/human/H)
 	. = 0	//We start at 0.
-	if(H.status_flags & IGNORE_SPEED_CHANGES)
-		return .
 
 	if(has_gravity(H))
-		if(H.status_flags & GOTTAGOFAST)
+		if(HAS_TRAIT(H, TRAIT_GOTTAGOFAST))
 			. -= 1
-		else if(H.status_flags & GOTTAGONOTSOFAST)
+		else if(HAS_TRAIT(H, TRAIT_GOTTAGONOTSOFAST))
 			. -= 0.5
 
 		var/ignoreslow = FALSE
-		if((H.status_flags & IGNORESLOWDOWN) || (RUN in H.mutations))
+		if(HAS_TRAIT(H, TRAIT_IGNORESLOWDOWN))
 			ignoreslow = TRUE
 
 		var/flight = H.flying	//Check for flight and flying items
@@ -259,18 +269,20 @@
 			for(var/datum/reagent/R in H.reagents.reagent_list)
 				if(R.shock_reduction)
 					health_deficiency -= R.shock_reduction
-		if(health_deficiency >= 40)
-			if(flight)
-				. += (health_deficiency / 75)
-			else
-				. += (health_deficiency / 25)
-		. += 2 * H.stance_damage //damaged/missing feet or legs is slow
+		if(!HAS_TRAIT(H, TRAIT_IGNOREDAMAGESLOWDOWN))
+			if(health_deficiency >= 40)
+				if(flight)
+					. += (health_deficiency / 75)
+				else
+					. += (health_deficiency / 25)
+		if(H.dna.species.spec_movement_delay()) //Species overrides for slowdown due to feet/legs
+			. += 2 * H.stance_damage //damaged/missing feet or legs is slow
 
 		if((hungry >= 70) && !flight)
 			. += hungry/50
-		if(FAT in H.mutations)
+		if(HAS_TRAIT(H, TRAIT_FAT))
 			. += (1.5 - flight)
-		if(H.bodytemperature < BODYTEMP_COLD_DAMAGE_LIMIT)
+		if(H.bodytemperature < BODYTEMP_COLD_DAMAGE_LIMIT && !(HAS_TRAIT(H, TRAIT_RESISTCOLD)))
 			. += (BODYTEMP_COLD_DAMAGE_LIMIT - H.bodytemperature) / COLD_SLOWDOWN_FACTOR
 
 	return .
@@ -286,11 +298,24 @@
 		H.hud_used.update_locked_slots()
 	H.ventcrawler = ventcrawler
 
+	H.mob_biotypes = inherent_biotypes
+
+	for(var/X in inherent_traits)
+		ADD_TRAIT(H, X, SPECIES_TRAIT)
+
+	if(TRAIT_VIRUSIMMUNE in inherent_traits)
+		for(var/datum/disease/A in H.viruses)
+			if(!A.bypasses_immunity)
+				A.cure(FALSE)
+
 	if(inherent_factions)
 		for(var/i in inherent_factions)
 			H.faction += i //Using +=/-= for this in case you also gain the faction from a different source.
 
 /datum/species/proc/on_species_loss(mob/living/carbon/human/H)
+	for(var/X in inherent_traits)
+		REMOVE_TRAIT(H, X, SPECIES_TRAIT)
+
 	if(H.butcher_results) //clear it out so we don't butcher a actual human.
 		H.butcher_results = null
 	H.ventcrawler = initial(H.ventcrawler)
@@ -317,8 +342,8 @@
 // For special snowflake species effects
 // (Slime People changing color based on the reagents they consume)
 /datum/species/proc/handle_life(mob/living/carbon/human/H)
-	if((NO_BREATHE in species_traits) || (BREATHLESS in H.mutations))
-		var/takes_crit_damage = (!(NOCRITDAMAGE in species_traits))
+	if(HAS_TRAIT(H, TRAIT_NOBREATH))
+		var/takes_crit_damage = (!HAS_TRAIT(H, TRAIT_NOCRITDAMAGE))
 		if((H.health <= HEALTH_THRESHOLD_CRIT) && takes_crit_damage)
 			H.adjustBruteLoss(1)
 	return
@@ -329,46 +354,66 @@
 /datum/species/proc/handle_death(gibbed, mob/living/carbon/human/H) //Handles any species-specific death events (such as dionaea nymph spawns).
 	return
 
-/datum/species/proc/apply_damage(damage = 0, damagetype = BRUTE, def_zone = null, blocked = 0, mob/living/carbon/human/H, sharp = 0, obj/used_weapon = null)
-	blocked = (100 - blocked) / 100
-	if(blocked <= 0)
-		return 0
+/datum/species/proc/apply_damage(damage = 0, damagetype = BRUTE, def_zone, blocked = 0, mob/living/carbon/human/H, sharp = FALSE, obj/used_weapon, spread_damage = FALSE)
+	var/hit_percent = (100 - (blocked + armor)) / 100
+	hit_percent = (hit_percent * (100 - H.physiology.damage_resistance)) / 100
+	if(!damage || (hit_percent <= 0))
+		return FALSE
 
 	var/obj/item/organ/external/organ = null
-	if(isorgan(def_zone))
-		organ = def_zone
-	else
-		if(!def_zone)
-			def_zone = ran_zone(def_zone)
-		organ = H.get_organ(check_zone(def_zone))
-	if(!organ)
-		return 0
-
-	damage = damage * blocked
+	if(!spread_damage)
+		if(isorgan(def_zone))
+			organ = def_zone
+		else
+			if(!def_zone)
+				def_zone = ran_zone(def_zone)
+			organ = H.get_organ(check_zone(def_zone))
+			if(!organ)
+				organ = H.bodyparts[1]
 
 	switch(damagetype)
 		if(BRUTE)
-			damage = damage * brute_mod
-			if(damage)
+			var/damage_amount = damage * hit_percent * brute_mod * H.physiology.brute_mod
+			if(damage_amount)
 				H.damageoverlaytemp = 20
 
-			if(organ.receive_damage(damage, 0, sharp, used_weapon))
-				H.UpdateDamageIcon()
-
+			if(organ)
+				if(organ.receive_damage(damage_amount, 0, sharp, used_weapon))
+					H.UpdateDamageIcon()
+			else //no bodypart, we deal damage with a more general method.
+				H.adjustBruteLoss(damage_amount)
 		if(BURN)
-			damage = damage * burn_mod
-			if(damage)
+			var/damage_amount = damage * hit_percent * burn_mod * H.physiology.burn_mod
+			if(damage_amount)
 				H.damageoverlaytemp = 20
 
-			if(organ.receive_damage(0, damage, sharp, used_weapon))
-				H.UpdateDamageIcon()
+			if(organ)
+				if(organ.receive_damage(0, damage_amount, sharp, used_weapon))
+					H.UpdateDamageIcon()
+			else
+				H.adjustFireLoss(damage_amount)
+		if(TOX)
+			var/damage_amount = damage * hit_percent * H.physiology.tox_mod
+			H.adjustToxLoss(damage_amount)
+		if(OXY)
+			var/damage_amount = damage * hit_percent * H.physiology.oxy_mod
+			H.adjustOxyLoss(damage_amount)
+		if(CLONE)
+			var/damage_amount = damage * hit_percent * H.physiology.clone_mod
+			H.adjustCloneLoss(damage_amount)
+		if(STAMINA)
+			var/damage_amount = damage * hit_percent * H.physiology.stamina_mod
+			H.adjustStaminaLoss(damage_amount)
+		if(BRAIN)
+			var/damage_amount = damage * hit_percent * H.physiology.brain_mod
+			H.adjustBrainLoss(damage_amount)
 
 	// Will set our damageoverlay icon to the next level, which will then be set back to the normal level the next mob.Life().
 	H.updatehealth("apply damage")
-	return 1
+	return TRUE
 
-/datum/species/proc/spec_stun(mob/living/carbon/human/H,amount)
-	return
+/datum/species/proc/spec_stun(mob/living/carbon/human/H, amount)
+	. = stun_mod * H.physiology.stun_mod * amount
 
 /datum/species/proc/spec_electrocute_act(mob/living/carbon/human/H, shock_damage, source, siemens_coeff = 1, flags = NONE)
 	return
@@ -376,7 +421,9 @@
 /datum/species/proc/help(mob/living/carbon/human/user, mob/living/carbon/human/target, datum/martial_art/attacker_style)
 	if(attacker_style && attacker_style.help_act(user, target) == TRUE)//adminfu only...
 		return TRUE
-	if(target.health >= HEALTH_THRESHOLD_CRIT && !(target.status_flags & FAKEDEATH))
+	if(target.on_fire)
+		user.pat_out(target)
+	else if(target.health >= HEALTH_THRESHOLD_CRIT && !HAS_TRAIT(target, TRAIT_FAKEDEATH))
 		target.help_shake_act(user)
 		return TRUE
 	else
@@ -397,18 +444,19 @@
 		to_chat(user, "<span class='warning'>You don't want to harm [target]!</span>")
 		return FALSE
 	//Vampire code
-	if(user.mind && user.mind.vampire && (user.mind in SSticker.mode.vampires) && !user.mind.vampire.draining && user.zone_selected == "head" && target != user)
+	var/datum/antagonist/vampire/V = user?.mind?.has_antag_datum(/datum/antagonist/vampire)
+	if(V && !V.draining && user.zone_selected == "head" && target != user)
 		if((NO_BLOOD in target.dna.species.species_traits) || target.dna.species.exotic_blood || !target.blood_volume)
 			to_chat(user, "<span class='warning'>They have no blood!</span>")
 			return
-		if(target.mind && target.mind.vampire && (target.mind in SSticker.mode.vampires))
+		if(target.mind && target.mind.has_antag_datum(/datum/antagonist/vampire))
 			to_chat(user, "<span class='warning'>Your fangs fail to pierce [target.name]'s cold flesh</span>")
 			return
-		if(SKELETON in target.mutations)
+		if(HAS_TRAIT(target, TRAIT_SKELETONIZED))
 			to_chat(user, "<span class='warning'>There is no blood in a skeleton!</span>")
 			return
 		//we're good to suck the blood, blaah
-		user.mind.vampire.handle_bloodsucking(target)
+		V.handle_bloodsucking(target)
 		add_attack_logs(user, target, "vampirebit")
 		return
 		//end vampire codes
@@ -437,6 +485,7 @@
 
 		var/damage = rand(user.dna.species.punchdamagelow, user.dna.species.punchdamagehigh)
 		damage += attack.damage
+		damage += user.physiology.melee_bonus
 		if(!damage)
 			playsound(target.loc, attack.miss_sound, 25, 1, -1)
 			target.visible_message("<span class='danger'>[user] tried to [pick(attack.attack_verb)] [target]!</span>")
@@ -444,7 +493,7 @@
 
 
 		var/obj/item/organ/external/affecting = target.get_organ(ran_zone(user.zone_selected))
-		var/armor_block = target.run_armor_check(affecting, "melee")
+		var/armor_block = target.run_armor_check(affecting, MELEE)
 
 		playsound(target.loc, attack.attack_sound, 25, 1, -1)
 
@@ -473,7 +522,7 @@
 		var/obj/item/organ/external/affecting = target.get_organ(ran_zone(user.zone_selected))
 		var/randn = rand(1, 100)
 		if(randn <= 25)
-			target.apply_effect(2, WEAKEN, target.run_armor_check(affecting, "melee"))
+			target.apply_effect(2, WEAKEN, target.run_armor_check(affecting, MELEE))
 			playsound(target.loc, 'sound/weapons/thudswoosh.ogg', 50, 1, -1)
 			target.visible_message("<span class='danger'>[user] has pushed [target]!</span>")
 			add_attack_logs(user, target, "Pushed over", ATKLOG_ALL)
@@ -680,8 +729,6 @@
 				if(!disable_warning)
 					to_chat(H, "<span class='alert'>You need a jumpsuit before you can attach this [I.name].</span>")
 				return FALSE
-			if(I.slot_flags & SLOT_DENYPOCKET)
-				return
 			if(I.w_class <= WEIGHT_CLASS_SMALL || (I.slot_flags & SLOT_POCKET))
 				return TRUE
 		if(slot_r_store)
@@ -694,8 +741,6 @@
 			if(!H.w_uniform && !nojumpsuit && !(O?.status & ORGAN_ROBOT))
 				if(!disable_warning)
 					to_chat(H, "<span class='alert'>You need a jumpsuit before you can attach this [I.name].</span>")
-				return FALSE
-			if(I.slot_flags & SLOT_DENYPOCKET)
 				return FALSE
 			if(I.w_class <= WEIGHT_CLASS_SMALL || (I.slot_flags & SLOT_POCKET))
 				return TRUE
@@ -750,7 +795,7 @@
 	return FALSE
 
 /datum/species/proc/handle_mutations_and_radiation(mob/living/carbon/human/H)
-	if(RADIMMUNE in species_traits)
+	if(HAS_TRAIT(H, TRAIT_RADIMMUNE))
 		H.radiation = 0
 		return TRUE
 
@@ -771,11 +816,11 @@
 			to_chat(H, "<span class='danger'>You mutate!</span>")
 			randmutb(H)
 			H.emote("gasp")
-			domutcheck(H, null)
+			domutcheck(H)
 
 	if(radiation > RAD_MOB_HAIRLOSS)
 		var/obj/item/organ/external/head/head_organ = H.get_organ("head")
-		if(!head_organ)
+		if(!head_organ || (NO_HAIR in species_traits))
 			return
 		if(prob(15) && head_organ.h_style != "Bald")
 			to_chat(H, "<span class='danger'>Your hair starts to fall out in clumps...</span>")
@@ -810,7 +855,8 @@ It'll return null if the organ doesn't correspond, so include null checks when u
 		H.sight |= eyes.vision_flags
 		H.see_in_dark = eyes.see_in_dark
 		H.see_invisible = eyes.see_invisible
-		H.lighting_alpha = eyes.lighting_alpha
+		if(!isnull(eyes.lighting_alpha))
+			H.lighting_alpha = eyes.lighting_alpha
 	else
 		H.see_in_dark = initial(H.see_in_dark)
 		H.see_invisible = initial(H.see_invisible)
@@ -821,23 +867,20 @@ It'll return null if the organ doesn't correspond, so include null checks when u
 		if(A.update_remote_sight(H)) //returns 1 if we override all other sight updates.
 			return
 
-	if(H.mind && H.mind.vampire)
-		if(H.mind.vampire.get_ability(/datum/vampire_passive/full))
+	var/datum/antagonist/vampire/V = H.mind?.has_antag_datum(/datum/antagonist/vampire)
+	if(V)
+		if(V.get_ability(/datum/vampire_passive/xray))
 			H.sight |= SEE_TURFS|SEE_MOBS|SEE_OBJS
-			H.see_in_dark = 8
+			H.see_in_dark += 8
 			H.lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
-		else if(H.mind.vampire.get_ability(/datum/vampire_passive/vision))
+		else if(V.get_ability(/datum/vampire_passive/full))
 			H.sight |= SEE_MOBS
+			H.see_in_dark += 8
+			H.lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
+		else if(V.get_ability(/datum/vampire_passive/vision))
+			H.sight |= SEE_MOBS
+			H.see_in_dark += 1 // base of 2, 2+1 is 3
 			H.lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_VISIBLE
-
-	for(var/obj/item/organ/internal/cyberimp/eyes/E in H.internal_organs)
-		H.sight |= E.vision_flags
-		if(E.see_in_dark)
-			H.see_in_dark = max(H.see_in_dark, E.see_in_dark)
-		if(E.see_invisible)
-			H.see_invisible = min(H.see_invisible, E.see_invisible)
-		if(E.lighting_alpha)
-			H.lighting_alpha = min(H.lighting_alpha, E.lighting_alpha)
 
 	// my glasses, I can't see without my glasses
 	if(H.glasses)
@@ -870,11 +913,20 @@ It'll return null if the organ doesn't correspond, so include null checks when u
 		if(!isnull(H.vision_type.lighting_alpha))
 			H.lighting_alpha = min(H.vision_type.lighting_alpha, H.lighting_alpha)
 
-		if(H.vision_type.light_sensitive)
-			H.weakeyes = TRUE
+	if(HAS_TRAIT(H, TRAIT_MESON_VISION))
+		H.sight |= SEE_TURFS
+		H.lighting_alpha = min(H.lighting_alpha, LIGHTING_PLANE_ALPHA_MOSTLY_VISIBLE)
 
-	if(XRAY in H.mutations)
+	if(HAS_TRAIT(H, TRAIT_THERMAL_VISION))
+		H.sight |= (SEE_MOBS)
+		H.lighting_alpha = min(H.lighting_alpha, LIGHTING_PLANE_ALPHA_MOSTLY_VISIBLE)
+
+	if(HAS_TRAIT(H, TRAIT_XRAY_VISION))
 		H.sight |= (SEE_TURFS|SEE_MOBS|SEE_OBJS)
+
+	if(HAS_TRAIT(H, TRAIT_NIGHT_VISION))
+		H.see_in_dark = max(H.see_in_dark, 8)
+		H.lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
 
 	if(H.has_status_effect(STATUS_EFFECT_SUMMONEDGHOST))
 		H.see_invisible = SEE_INVISIBLE_OBSERVER
@@ -889,6 +941,7 @@ It'll return null if the organ doesn't correspond, so include null checks when u
 	return TRUE
 
 /datum/species/proc/spec_hitby(atom/movable/AM, mob/living/carbon/human/H)
+	return
 
 /datum/species/proc/spec_attacked_by(obj/item/I, mob/living/user, obj/item/organ/external/affecting, intent, mob/living/carbon/human/H)
 
@@ -906,8 +959,20 @@ It'll return null if the organ doesn't correspond, so include null checks when u
 /datum/species/proc/can_hear(mob/living/carbon/human/H)
 	. = FALSE
 	var/obj/item/organ/internal/ears/ears = H.get_int_organ(/obj/item/organ/internal/ears)
-	if(istype(ears) && !ears.deaf)
+	if(istype(ears) && !HAS_TRAIT(H, TRAIT_DEAF))
 		. = TRUE
+
+/datum/species/proc/spec_Process_Spacemove(mob/living/carbon/human/H)
+	return FALSE
+
+/datum/species/proc/spec_thunk(mob/living/carbon/human/H)
+	return FALSE
+
+/datum/species/proc/spec_movement_delay()
+	return TRUE
+
+/datum/species/proc/spec_WakeUp(mob/living/carbon/human/H)
+	return FALSE
 
 /**
   * Species-specific runechat colour handler

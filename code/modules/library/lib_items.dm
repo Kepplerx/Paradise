@@ -20,7 +20,7 @@
 	opacity = 1
 	resistance_flags = FLAMMABLE
 	max_integrity = 200
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 50, "acid" = 0)
+	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 0, RAD = 0, FIRE = 50, ACID = 0)
 	var/tmp/busy = 0
 	var/list/allowed_books = list(/obj/item/book, /obj/item/spellbook, /obj/item/storage/bible, /obj/item/tome) //Things allowed in the bookcase
 
@@ -70,7 +70,7 @@
 	else
 		return ..()
 
-/obj/structure/bookcase/attack_hand(var/mob/user as mob)
+/obj/structure/bookcase/attack_hand(mob/user as mob)
 	if(contents.len)
 		var/obj/item/book/choice = input("Which book would you like to remove from [src]?") as null|anything in contents
 		if(choice)
@@ -126,6 +126,21 @@
 	new /obj/item/book/manual/research_and_development(src)
 	update_icon()
 
+/obj/structure/bookcase/sop
+	name = "bookcase (Standard Operating Procedures)"
+
+/obj/structure/bookcase/sop/Initialize()
+	. = ..()
+	new /obj/item/book/manual/sop_command(src)
+	new /obj/item/book/manual/sop_engineering(src)
+	new /obj/item/book/manual/sop_general(src)
+	new /obj/item/book/manual/sop_legal(src)
+	new /obj/item/book/manual/sop_medical(src)
+	new /obj/item/book/manual/sop_science(src)
+	new /obj/item/book/manual/sop_security(src)
+	new /obj/item/book/manual/sop_service(src)
+	new /obj/item/book/manual/sop_supply(src)
+	update_icon()
 
 /*
  * Book
@@ -140,7 +155,8 @@
 	w_class = WEIGHT_CLASS_NORMAL		 //upped to three because books are, y'know, pretty big. (and you could hide them inside eachother recursively forever)
 	attack_verb = list("bashed", "whacked")
 	resistance_flags = FLAMMABLE
-
+	drop_sound = 'sound/items/handling/book_drop.ogg'
+	pickup_sound =  'sound/items/handling/book_pickup.ogg'
 	var/dat			 // Actual page content
 	var/due_date = 0 // Game time in 1/10th seconds
 	var/author		 // Who wrote the thing, can be changed by pen or PC. It is not automatically assigned
@@ -152,7 +168,7 @@
 	/// Book DRM. If this var is TRUE, it cannot be scanned and re-uploaded
 	var/has_drm = FALSE
 
-/obj/item/book/attack_self(var/mob/user as mob)
+/obj/item/book/attack_self(mob/user as mob)
 	if(carved)
 		if(store)
 			to_chat(user, "<span class='notice'>[store] falls out of [title]!</span>")

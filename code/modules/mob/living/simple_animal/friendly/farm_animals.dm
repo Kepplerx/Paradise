@@ -17,6 +17,7 @@
 	response_disarm = "gently pushes aside"
 	response_harm   = "kicks"
 	faction = list("neutral")
+	mob_biotypes = MOB_ORGANIC | MOB_BEAST
 	attack_same = 1
 	attacktext = "kicks"
 	attack_sound = 'sound/weapons/punch1.ogg'
@@ -28,6 +29,8 @@
 	can_collar = 1
 	blood_volume = BLOOD_VOLUME_NORMAL
 	var/obj/item/udder/udder = null
+	gender = FEMALE
+	footstep_type = FOOTSTEP_MOB_SHOE
 
 /mob/living/simple_animal/hostile/retaliate/goat/New()
 	udder = new()
@@ -70,7 +73,7 @@
 	if(!stat)
 		eat_plants()
 
-/mob/living/simple_animal/hostile/retaliate/goat/attackby(var/obj/item/O as obj, var/mob/user as mob, params)
+/mob/living/simple_animal/hostile/retaliate/goat/attackby(obj/item/O as obj, mob/user as mob, params)
 	if(stat == CONSCIOUS && istype(O, /obj/item/reagent_containers/glass))
 		udder.milkAnimal(O, user)
 	else
@@ -112,7 +115,7 @@
 	icon_living = "cow"
 	icon_dead = "cow_dead"
 	icon_gib = "cow_gib"
-	speak = list("moo?","moo","MOOOOOO")
+	speak = list("Moo?","Moo","MOOOOOO")
 	speak_emote = list("moos","moos hauntingly")
 	emote_hear = list("brays")
 	emote_see = list("shakes its head")
@@ -132,6 +135,8 @@
 	blood_volume = BLOOD_VOLUME_NORMAL
 	var/obj/item/udder/udder = null
 	gender = FEMALE
+	mob_biotypes = MOB_ORGANIC | MOB_BEAST
+	footstep_type = FOOTSTEP_MOB_SHOE
 
 /mob/living/simple_animal/cow/Initialize()
 	udder = new()
@@ -170,6 +175,18 @@
 	else
 		..()
 
+
+/mob/living/simple_animal/cow/npc_safe(mob/user)
+	return TRUE
+
+/mob/living/simple_animal/cow/betsy
+	name = "Betsy"
+	real_name = "Betsy"
+	unique_pet = TRUE
+
+/mob/living/simple_animal/cow/betsy/npc_safe(mob/user) // depriving the chef of his animals is not cool
+	return FALSE
+
 /mob/living/simple_animal/chick
 	name = "\improper chick"
 	desc = "Adorable! They make such a racket though."
@@ -178,6 +195,7 @@
 	icon_dead = "chick_dead"
 	icon_gib = "chick_gib"
 	gender = FEMALE
+	mob_biotypes = MOB_ORGANIC | MOB_BEAST
 	speak = list("Cherp.","Cherp?","Chirrup.","Cheep!")
 	speak_emote = list("cheeps")
 	emote_hear = list("cheeps")
@@ -199,6 +217,7 @@
 	can_hide = 1
 	can_collar = 1
 	gold_core_spawnable = FRIENDLY_SPAWN
+	footstep_type = FOOTSTEP_MOB_CLAW
 
 /mob/living/simple_animal/chick/New()
 	..()
@@ -215,6 +234,10 @@
 				mind.transfer_to(C)
 			qdel(src)
 
+
+/mob/living/simple_animal/chick/npc_safe(mob/user)
+	return TRUE
+
 #define MAX_CHICKENS 50
 GLOBAL_VAR_INIT(chicken_count, 0)
 
@@ -222,6 +245,7 @@ GLOBAL_VAR_INIT(chicken_count, 0)
 	name = "\improper chicken"
 	desc = "Hopefully the eggs are good this season."
 	gender = FEMALE
+	mob_biotypes = MOB_ORGANIC | MOB_BEAST
 	icon_state = "chicken_brown"
 	icon_living = "chicken_brown"
 	icon_dead = "chicken_brown_dead"
@@ -254,6 +278,7 @@ GLOBAL_VAR_INIT(chicken_count, 0)
 	var/list/layMessage = EGG_LAYING_MESSAGES
 	var/list/validColors = list("brown","black","white")
 	gold_core_spawnable = FRIENDLY_SPAWN
+	footstep_type = FOOTSTEP_MOB_CLAW
 
 /mob/living/simple_animal/chicken/New()
 	..()
@@ -311,6 +336,32 @@ GLOBAL_VAR_INIT(chicken_count, 0)
 	else
 		STOP_PROCESSING(SSobj, src)
 
+/mob/living/simple_animal/chicken/npc_safe(mob/user)
+	return TRUE
+
+/mob/living/simple_animal/chicken/clucky
+	name = "Commander Clucky"
+	real_name = "Commander Clucky"
+	unique_pet = TRUE
+
+/mob/living/simple_animal/chicken/clucky/npc_safe(mob/user) // depriving the chef of his animals is not cool
+	return FALSE
+
+/mob/living/simple_animal/chicken/kentucky
+	name = "Kentucky"
+	real_name = "Kentucky"
+	unique_pet = TRUE
+
+/mob/living/simple_animal/chicken/kentucky/npc_safe(mob/user)
+	return FALSE
+
+/mob/living/simple_animal/chicken/featherbottom
+	name = "Featherbottom"
+	real_name = "Featherbottom"
+	unique_pet = TRUE
+
+/mob/living/simple_animal/chicken/featherbottom/npc_safe(mob/user)
+	return FALSE
 
 /mob/living/simple_animal/pig
 	name = "pig"
@@ -333,8 +384,10 @@ GLOBAL_VAR_INIT(chicken_count, 0)
 	health = 50
 	maxHealth = 50
 	can_collar = 1
+	mob_biotypes = MOB_ORGANIC | MOB_BEAST
 	gold_core_spawnable = FRIENDLY_SPAWN
 	blood_volume = BLOOD_VOLUME_NORMAL
+	footstep_type = FOOTSTEP_MOB_SHOE
 
 /mob/living/simple_animal/turkey
 	name = "turkey"
@@ -357,7 +410,9 @@ GLOBAL_VAR_INIT(chicken_count, 0)
 	health = 50
 	maxHealth = 50
 	can_collar = 1
+	mob_biotypes = MOB_ORGANIC | MOB_BEAST
 	gold_core_spawnable = FRIENDLY_SPAWN
+	footstep_type = FOOTSTEP_MOB_CLAW
 
 /mob/living/simple_animal/goose
 	name = "goose"
@@ -380,7 +435,9 @@ GLOBAL_VAR_INIT(chicken_count, 0)
 	health = 50
 	maxHealth = 50
 	can_collar = 1
+	mob_biotypes = MOB_ORGANIC | MOB_BEAST
 	gold_core_spawnable = FRIENDLY_SPAWN
+	footstep_type = FOOTSTEP_MOB_CLAW
 
 /mob/living/simple_animal/seal
 	name = "seal"
@@ -403,6 +460,7 @@ GLOBAL_VAR_INIT(chicken_count, 0)
 	health = 50
 	maxHealth = 50
 	can_collar = 1
+	mob_biotypes = MOB_ORGANIC | MOB_BEAST
 	gold_core_spawnable = FRIENDLY_SPAWN
 	blood_volume = BLOOD_VOLUME_NORMAL
 
@@ -427,6 +485,7 @@ GLOBAL_VAR_INIT(chicken_count, 0)
 	health = 50
 	maxHealth = 50
 	can_collar = 1
+	mob_biotypes = MOB_ORGANIC | MOB_BEAST
 	gold_core_spawnable = FRIENDLY_SPAWN
 	blood_volume = BLOOD_VOLUME_NORMAL
 

@@ -90,7 +90,7 @@
 /obj/effect/gluttony/CanPass(atom/movable/mover, turf/target)//So bullets will fly over and stuff.
 	if(ishuman(mover))
 		var/mob/living/carbon/human/H = mover
-		if(H.nutrition >= NUTRITION_LEVEL_FAT || (FAT in H.mutations))
+		if(H.nutrition >= NUTRITION_LEVEL_FAT || HAS_TRAIT(H, TRAIT_FAT))
 			H.visible_message("<span class='warning'>[H] pushes through [src]!</span>", "<span class='notice'>You've seen and eaten worse than this.</span>")
 			return TRUE
 		else
@@ -115,7 +115,14 @@
 	for(var/level in levels)
 		if(!is_teleport_allowed(level))
 			levels -= level
-
+	if(user.z != 3) //if you somehow manage to bloody get out of lavaland without closing the UI
+		var/turf/return_turf = locate(user.x, user.y, 3) //return to sender
+		var/mob/living/carbon/human/fool = user
+		if(return_turf && fool)
+			to_chat(fool, "<span class='danger'><B>You dare try to play me for a fool?</B></span>")
+			fool.monkeyize()
+			fool.forceMove(return_turf)
+			return
 	T.ChangeTurf(/turf/simulated/floor/chasm)
 	var/turf/simulated/floor/chasm/C = T
 	C.drop_x = T.x

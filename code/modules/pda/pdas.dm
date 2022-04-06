@@ -45,12 +45,7 @@
 	default_cartridge = /obj/item/cartridge/mime
 	icon_state = "pda-mime"
 	ttone = "silence"
-
-/obj/item/pda/mime/New()
-	..()
-	var/datum/data/pda/app/M = find_program(/datum/data/pda/app/messenger)
-	if(M)
-		M.notify_silent = 1
+	silent = TRUE
 
 /obj/item/pda/heads
 	default_cartridge = /obj/item/cartridge/head
@@ -118,7 +113,7 @@
 	icon_state = "pda-miner"
 
 /obj/item/pda/syndicate
-	default_cartridge = /obj/item/cartridge/syndicate
+	default_cartridge = /obj/item/cartridge/syndicate/nuclear
 	icon_state = "pda-syndi"
 	name = "Military PDA"
 	owner = "John Doe"
@@ -149,12 +144,7 @@
 	icon_state = "pda-library"
 	desc = "A portable microcomputer by Thinktronic Systems, LTD. This is model is a WGW-11 series e-reader."
 	model_name = "Thinktronic 5290 WGW-11 Series E-reader and Personal Data Assistant"
-
-/obj/item/pda/librarian/New()
-	..()
-	var/datum/data/pda/app/M = find_program(/datum/data/pda/app/messenger)
-	if(M)
-		M.notify_silent = 1 //Quiet in the library!
+	silent = TRUE
 
 /obj/item/pda/clear
 	icon_state = "pda-transp"
